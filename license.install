@@ -1,0 +1,85 @@
+<?php
+
+/**
+* Implementation of hook_schema().
+*/
+function license_schema() {
+  $schema['license'] = array(
+    'description' => t('Table storing license descriptions.'),
+    'export' => array(
+      'key' => 'name',
+      'identifier' => 'preset', // Exports will be as $preset
+      'default hook' => 'default_licenses',  // Function hook name.
+      'api' => array(
+        'owner' => 'license',
+        'api' => 'default_licenses',  // Base name for api include files.
+        'minimum_version' => 1,
+        'current_version' => 1,
+      ),
+    ),
+    'fields' => array(
+      'name' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'Unique ID for license descriptions. Used to identify them programmatically.',
+      ),
+      'code' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'The short name of the license (by, by-nd, gpl, mit, ...).',
+      ),
+      'lid' => array(
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+        'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
+        'no export' => TRUE, // Do not export database-only keys.
+      ),
+      
+      'title' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'A human readable name of a license description.',
+      ),
+      'language' => array(
+        'type' => 'varchar',
+        'length' => '16',
+        'description' => 'The language of the license description.',
+      ),
+      'version' => array(
+        'type' => 'varchar',
+        'length' => '16',
+        'description' => 'The version of the license description.',
+      ),
+      'explanation' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'A small human readable explanation about the license.',
+      ),
+      
+      
+      'url' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'A URL where the license can be found.',
+      ),
+      'logo' => array(
+        'type' => 'varchar',
+        'length' => '255',
+        'description' => 'A path or URL where the license can be found.',
+      ),
+    ),
+    'primary key' => array('lid'),
+    'unique keys' => array(
+      'name' => array('name'),
+    ),
+  );
+  return $schema;
+}
+
+/**
+* Implementation of hook_install().
+*/
+function license_install() {
+  drupal_install_schema($module);
+}
