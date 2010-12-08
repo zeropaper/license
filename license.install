@@ -78,8 +78,15 @@ function license_schema() {
 }
 
 /**
+ * Implementation of hook_install().
+ */
+function license_install() {
+  drupal_install_schema('license');
+}
+
+/**
 * Implementation of hook_install().
 */
-function license_install() {
-  drupal_install_schema($module);
+function license_uninstall() {
+  drupal_uninstall_schema('license');
 }

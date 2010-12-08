@@ -1,4 +1,5 @@
 <?php
+
 /**
  * Load one license description or all license descriptions.
  *
@@ -14,12 +15,10 @@ function license_load($name = NULL) {
   ctools_include('export');
   if ($name) {
     $licenses = ctools_export_load_object('license', 'names', array($name));
-//    zdpm($licenses);
     return isset($licenses[$name]) ? $licenses[$name] : FALSE;
   }
   else {
     $licenses = ctools_export_load_object('license');
-//    zdpm($licenses);
     return $licenses;
   }
 
@@ -68,6 +67,18 @@ function license_default_licenses() {
     'title' => t('No specified license'),
     'explanation' => t('There is no information about the license.'),
   ));
+  
+  $wtfpl = new stdClass();
+  $wtfpl->api_version = 1;
+  $wtfpl->logo = '';
+  $wtfpl->code = 'wtfpl';
+  $wtfpl->name = 'wtfpl';
+  $wtfpl->title = t('Do what the fuck you want to public license');
+  $wtfpl->version = '2';
+  $wtfpl->language = 'en';
+  $wtfpl->url = 'http://sam.zoy.org/wtfpl/COPYING';
+  $wtfpl->explanation = t('Not clear enough?');
+  $export[$wtfpl->name] = $wtfpl;
   
   $cc_codes = array(
     'by' => t('Attribution'),
@@ -118,7 +129,7 @@ function license_default_licenses() {
       }
     }
   }
-//  zdpm($export);
+  
   return $export;
 }
 
@@ -261,16 +272,23 @@ function theme_license_button($license, $additions = array(), $size = '80x15') {
   $author = '';
   if ($additions['author_name']) {
     if (check_url($additions['author_url'])) {
-      $author = ' '. l($additions['author_name'], $additions['author_url']);
+      $author = ' '. l($additions['author_name'], $additions['author_url'], array(
+        'attributes' => array(
+          'class' => 'license-author'
+        )
+      ));
     }
     else {
-      $author = ' '. check_plain($additions['author_name']);
+      $author = ' <span class="license-author">'. check_plain($additions['author_name']) . '</span>';
     }
   }
   
   $image = theme('image', $path .'/'. $image_name, $alt, $alt);
   return l($image, $license->url, array(
     'html' => TRUE,
+    'attributes' => array(
+      'class' => 'license-image'
+    )
   )) . $author;
 }
 
@@ -323,7 +341,6 @@ function license_form_options($version = NULL, $langcode = NULL, $groupby = NULL
       FALSE => 'NO',
       TRUE => 'YES',
     );
-//    zdpm("\n$license->name\nversion:\t$version\t{$pass[$version_pass]}\t$license->version\nlanguage:\t$langcode\t{$pass[$language_pass]}\t$license->language");
   }
   return $options;
 }
@@ -337,11 +354,6 @@ function license_filter($version = NULL, $langcode = NULL) {
     if ($version_pass && $language_pass) {
       $licenses[$name] = $license;
     }
-    $pass = array(
-      FALSE => 'NO',
-      TRUE => 'YES',
-    );
-//    zdpm("\n$license->name\nversion:\t$version\t{$pass[$version_pass]}\t$license->version\nlanguage:\t$langcode\t{$pass[$language_pass]}\t$license->language");
   }
   return $licenses;
 }

@@ -66,11 +66,11 @@ function license_admin_descriptions() {
     'link-add' => array(
       'title' => t('Add license description'),
       'href' => 'admin/settings/license/add',
-  ),
-    'link-import' => array(
-      'title' => t('Import license description'),
-      'href' => 'admin/settings/license/import',
-  ),
+    ),
+      'link-import' => array(
+        'title' => t('Import license description'),
+        'href' => 'admin/settings/license/import',
+    ),
   );
   $links = theme('links', $links, array('class' => 'license-presets-links'));
 
