@@ -23,7 +23,7 @@ function license_admin_descriptions() {
 
   foreach ($licenses as $key => $license) {
     $row = array();
-    $row[0] = l($license->title, $license->url) .'<br/>'. theme('license_button_by_code', $license->name);
+    $row[0] = l($license->title, $license->url);// .'<br/>'. theme('license_button_by_code', $license->name);
     $row[1] = check_plain($license->version);
     $row[2] = check_plain($license->language);
     $row[3] = check_plain($license->explanation);
@@ -67,14 +67,14 @@ function license_admin_descriptions() {
       'title' => t('Add license description'),
       'href' => 'admin/settings/license/add',
     ),
-      'link-import' => array(
-        'title' => t('Import license description'),
-        'href' => 'admin/settings/license/import',
+    'link-import' => array(
+      'title' => t('Import license description'),
+      'href' => 'admin/settings/license/import',
     ),
   );
   $links = theme('links', $links, array('class' => 'license-presets-links'));
 
-  return $table . $links;
+  return $links . $table;
 }
 
 
