@@ -68,6 +68,18 @@ function license_default_licenses() {
     'explanation' => t('There is no information about the license.'),
   ));
   
+  $sil = new stdClass();
+  $sil->api_version = 1;
+  $sil->logo = '';
+  $sil->code = 'sil';
+  $sil->name = 'SIL Open Font License';
+  $sil->title = t('SIL Open Font License');
+  $sil->version = '1.1';
+  $sil->language = 'en';
+  $sil->url = 'http://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web';
+  $sil->explanation = '';
+  $export[$sil->name] = $sil;
+  
   $wtfpl = new stdClass();
   $wtfpl->api_version = 1;
   $wtfpl->logo = '';
