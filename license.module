@@ -286,7 +286,8 @@ function theme_license_button($license, $additions = array(), $size = '80x15') {
     if (check_url($additions['author_url'])) {
       $author = ' '. l($additions['author_name'], $additions['author_url'], array(
         'attributes' => array(
-          'class' => 'license-author'
+          'class' => 'license-author',
+          'title' => check_url($additions['author_url']),
         )
       ));
     }
@@ -296,12 +297,12 @@ function theme_license_button($license, $additions = array(), $size = '80x15') {
   }
   
   $image = theme('image', $path .'/'. $image_name, $alt, $alt);
-  return l($image, $license->url, array(
+  return '<span class="license-info">'. l($image, $license->url, array(
     'html' => TRUE,
     'attributes' => array(
-      'class' => 'license-image'
+      'class' => 'license-image',
     )
-  )) . $author;
+  )) . $author .'</span>';
 }
 
 
