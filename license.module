@@ -93,12 +93,12 @@ function license_default_licenses() {
   $export[$wtfpl->name] = $wtfpl;
   
   $cc_codes = array(
-    'by' => t('Attribution'),
-    'by-sa' => t('Attribution Share Alike'),
-    'by-nd' => t('Attribution No Derivatives'),
-    'by-nc' => t('Attribution Non-Commercial'),
-    'by-nc-sa' => t('Attribution Non-Commercial Share Alike'),
-    'by-nc-nd' => t('Attribution Non-Commercial No Derivatives')
+    'by' => t('Creative Commons - Attribution'),
+    'by-sa' => t('Creative Commons - Attribution Share Alike'),
+    'by-nd' => t('Creative Commons - Attribution No Derivatives'),
+    'by-nc' => t('Creative Commons - Attribution Non-Commercial'),
+    'by-nc-sa' => t('Creative Commons - Attribution Non-Commercial Share Alike'),
+    'by-nc-nd' => t('Creative Commons - Attribution Non-Commercial No Derivatives')
   );
   $cc_versions = array(
     '1.0',
@@ -235,6 +235,16 @@ function license_menu() {
   return $items;
 }
 
+function license_icons_path() {
+  $path = variable_get('license_icons_path', '');
+  if (empty($path)) {
+    if (module_exists('libraries')) {
+      $path = libraries_get_path('license-icons');
+    }
+  }
+  return $path;
+}
+
 /**
  * Implements hook_theme().
  */
@@ -277,9 +287,10 @@ function theme_license_button_by_code($code, $version = NULL, $langcode = NULL, 
 }
 
 function theme_license_button($license, $additions = array(), $size = '80x15') {
-  $path = drupal_get_path('module', 'license') .'/images';
-  $alt = check_plain($license->title);
-  $image_name = $license->code .'-'. $size .'.png';
+  // no license information
+  if (is_array($license)) {
+    return '';
+  }
   
   $author = '';
   if ($additions['author_name']) {
@@ -296,7 +307,10 @@ function theme_license_button($license, $additions = array(), $size = '80x15') {
     }
   }
   
-  $image = theme('image', $path .'/'. $image_name, $alt, $alt);
+  $alt = t('Licensed under: @license', array('@license' => $license->title));
+  $image_name = $license->code .'-'. $size .'.png';
+  $image = theme('image', license_icons_path() .'/'. $image_name, $alt, $alt);
+  $image = $image ? $image : $alt;
   return '<span class="license-info">'. l($image, $license->url, array(
     'html' => TRUE,
     'attributes' => array(
@@ -307,9 +321,7 @@ function theme_license_button($license, $additions = array(), $size = '80x15') {
 
 
 function license_default_options() {
-  $options = array(
-    
-  );
+  $options = array();
   return $options;
 }
 
