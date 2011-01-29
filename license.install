@@ -1,11 +1,17 @@
 <?php
+/**
+ * @file
+ * Install, update and uninstall functions for the license module.
+ *
+ */
+
 
 /**
-* Implementation of hook_schema().
-*/
+ * Implements hook_schema().
+ */
 function license_schema() {
   $schema['license'] = array(
-    'description' => t('Table storing license descriptions.'),
+    'description' => 'Table storing license descriptions.',
     'export' => array(
       'key' => 'name',
       'identifier' => 'preset', // Exports will be as $preset
@@ -35,7 +41,7 @@ function license_schema() {
         'description' => 'Primary ID field for the table. Not used for anything except internal lookups.',
         'no export' => TRUE, // Do not export database-only keys.
       ),
-      
+
       'title' => array(
         'type' => 'varchar',
         'length' => '255',
@@ -56,8 +62,8 @@ function license_schema() {
         'length' => '255',
         'description' => 'A small human readable explanation about the license.',
       ),
-      
-      
+
+
       'url' => array(
         'type' => 'varchar',
         'length' => '255',
@@ -78,15 +84,17 @@ function license_schema() {
 }
 
 /**
- * Implementation of hook_install().
+ * Implements hook_install().
  */
 function license_install() {
-  drupal_install_schema('license');
+  // TODO The drupal_(un)install_schema functions are called automatically in D7.
+  // drupal_install_schema('license')
 }
 
 /**
-* Implementation of hook_install().
-*/
+ * Implements hook_install().
+ */
 function license_uninstall() {
-  drupal_uninstall_schema('license');
+  // TODO The drupal_(un)install_schema functions are called automatically in D7.
+  // drupal_uninstall_schema('license')
 }
