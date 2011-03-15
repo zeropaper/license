@@ -2,4 +2,4 @@ name = "License"
 description = "Provides some tools to deal with licensed content"
 core = 6.x
 dependencies[] = bulk_export
-;project status url = http://irata.ch/fserver
+project status url = http://irata.ch/fserver
