@@ -5,7 +5,7 @@
  * Page callback: license descriptions overview.
  */
 function license_admin_descriptions() {
-  
+
   // Load license descriptions and present them in table form.
   $licenses = license_load();
   $header = array(
@@ -23,28 +23,28 @@ function license_admin_descriptions() {
 
   foreach ($licenses as $key => $license) {
     $row = array();
-    $row[0] = l($license->title, $license->url);// .'<br/>'. theme('license_button_by_code', $license->name);
+    $row[0] = l($license->title, $license->url); // .'<br/>'. theme('license_button_by_code', $license->name);
     $row[1] = check_plain($license->version);
     $row[2] = check_plain($license->language);
     $row[3] = check_plain($license->explanation);
     $row[4] = check_plain($license->name);
 
     $row[6] = l(t('Edit'),
-      'admin/settings/license/edit/' . $license->name,
+      'admin/config/license/edit/' . $license->name,
     array('attributes' => array('class' => 'link-edit')));
     switch ($license->export_type) {
       case 1:
         // "Normal" type.
         $row[5] = '<em>' . t('Normal') . '</em>';
         $row[7] = l(t('Delete'),
-          'admin/settings/license/delete/' . $license->name,
+          'admin/config/license/delete/' . $license->name,
         array('attributes' => array('class' => 'link-delete')));
         break;
       case 3:
         // "Overridden" type.
         $row[5] = '<em>' . t('Overridden') . '</em>';
         $row[7] = l(t('Revert'),
-          'admin/settings/license/delete/' . $license->name,
+          'admin/config/license/delete/' . $license->name,
         array('attributes' => array('class' => 'link-delete')));
         break;
       default:
@@ -52,27 +52,27 @@ function license_admin_descriptions() {
         $row[7] = '';
     }
     $row[8] = l(t('Export'),
-      'admin/settings/license/export/' . $license->name,
+      'admin/config/license/export/' . $license->name,
     array('attributes' => array('class' => 'link-export')));
     ksort($row);
 
     $rows[] = $row;
   }
 
-  $table = theme('table', $header, $rows);
+  $table = theme('table', array('header' => $header, 'rows' => $rows));
 
   // Add links beneath the table.
   $links = array(
     'link-add' => array(
       'title' => t('Add license description'),
-      'href' => 'admin/settings/license/add',
+      'href' => 'admin/config/license/add',
     ),
     'link-import' => array(
       'title' => t('Import license description'),
-      'href' => 'admin/settings/license/import',
+      'href' => 'admin/config/license/import',
     ),
   );
-  $links = theme('links', $links, array('class' => 'license-presets-links'));
+  $links = theme('links', array('links' => $links, 'attributes' => array('class' => 'license-presets-links')));
 
   return $links . $table;
 }
@@ -84,10 +84,10 @@ function license_admin_descriptions() {
  * @param $name
  *   The license description's machine readable name.
  */
-function license_admin_description($form_state, $license = NULL) {
+function license_admin_description($form, $form_state, $license = NULL) {
   // Check if we're supposed to edit a preset or add a new one.
   if ($license) {
-    drupal_set_title(t('#name settings', array('#name' => check_plain($license->description))));
+    drupal_set_title(t('#name settings', array('#name' => $license->description)));
   }
   else {
     $license = new stdClass;
@@ -184,7 +184,7 @@ function license_admin_description_submit($form, &$form_state) {
   }
   else {
     drupal_set_message(t('Failed to save license description %license.', array('%license' => $form_state['values'])));
-    drupal_goto('admin/settings/license');
+    drupal_goto('admin/config/license');
   }
 }
 
@@ -194,14 +194,14 @@ function license_admin_description_submit($form, &$form_state) {
  * @param $name
  *   The license description's machine readable name.
  */
-function license_admin_description_delete($form_state, $license) {
+function license_admin_description_delete($form, $form_state, $license) {
   $form = array();
   $form['lid'] = array(
     '#type' => 'value',
     '#value' => $license->lid,
   );
   // Save a couple of values for the submit handler.
-  $form['explanation'] = array( // 'description' is used by confirm_form().
+  $form['explanation'] = array(// 'description' is used by confirm_form().
     '#type' => 'value',
     '#value' => $license->description,
   );
@@ -224,13 +224,13 @@ function license_admin_description_delete($form_state, $license) {
       break;
     default:
       // There are no other export types that can be deleted.
-      drupal_goto('admin/settings/license');
+      drupal_goto('admin/config/license');
       return array();
   }
 
   return confirm_form($form,
     $message,
-    isset($_GET['destination']) ? $_GET['destination'] : 'admin/settings/license',
+    isset($_GET['destination']) ? $_GET['destination'] : 'admin/config/license',
     t('This action cannot be undone. If you are using this license description in other parts of your system, you should change those settings first.'),
     $button,
     t('Cancel')
@@ -250,7 +250,7 @@ function license_admin_description_delete_submit($form, &$form_state) {
       'Reverted license description %license.';
     drupal_set_message(t($message, array('%license' => $form_state['values']['explanation'])));
   }
-  $form_state['redirect'] = 'admin/settings/license';
+  $form_state['redirect'] = 'admin/config/license';
 }
 
 
@@ -260,8 +260,8 @@ function license_admin_description_delete_submit($form, &$form_state) {
  * @param $license
  *   A license description object.
  */
-function license_admin_description_export($form_state, $license) {
-  drupal_set_title(t('Export of license description %description', array('%description' => $license->description)));
+function license_admin_description_export($form, $form_state, $license) {
+  drupal_set_title(t('Export of license description %description', array('%description' => $license->description)), PASS_THROUGH);
   $form = array();
 
   // Get export code with Ctools.
@@ -283,7 +283,7 @@ function license_admin_description_export($form_state, $license) {
 /**
  * Page callback: import license descriptions.
  */
-function license_admin_description_import() {
+function license_admin_description_import($form, &$form_state) {
   $form = array();
   $form['import'] = array(
     '#type' => 'textarea',
@@ -301,7 +301,10 @@ function license_admin_description_import() {
  */
 function license_admin_description_import_validate($form, &$form_state) {
   // Run the import code, which should return a serialized $license object.
-  $license = unserialize(drupal_eval($form_state['values']['import']));
+  if (module_exists('php')) {
+    $license = unserialize(php_eval($form_state['values']['import']));
+
+  }
   if (empty($license) || !is_object($license) || empty($license->name)) {
     form_set_error('import', t('The submitted license description code could not be interperated.'));
   }
@@ -327,5 +330,5 @@ function license_admin_description_import_submit($form, &$form_state) {
     drupal_set_message(t('Failed to import the license description.'), 'warning');
   }
 
-  $form_state['redirect'] = 'admin/settings/license';
+  $form_state['redirect'] = 'admin/config/license';
 }

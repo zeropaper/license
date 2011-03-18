@@ -9,7 +9,8 @@
  *   If $name is specified, an array of options for the specific license description.
  *   If not, a nested array containing options for all license descriptions.
  */
-function license_load($name = NULL) {
+function license_load($names) {
+  // ERROR: return statement not found in hook_load
 
   // Use Ctools export API to fetch all license descriptions from the DB as well as code.
   ctools_include('export');
@@ -32,7 +33,11 @@ function license_load($name = NULL) {
  */
 function license_delete($license) {
   $lid = is_object($license) ? $license->lid : $license;
-  db_query('DELETE FROM {license} WHERE lid=%d', $lid);
+  // TODO Please review the conversion of this statement to the D7 database API syntax.
+  /* db_query('DELETE FROM {license} WHERE lid=%d', $lid) */
+  db_delete('license')
+  ->condition('lid', $lid)
+  ->execute();
 
   // Clear the Ctools export API cache.
   ctools_include('export');
@@ -40,7 +45,7 @@ function license_delete($license) {
 }
 
 /**
- * Implementation of hook_ctools_plugin_api().
+ * Implements hook_ctools_plugin_api().
  *
  * Tell Ctools that we support the default_licenses API.
  */
@@ -51,12 +56,12 @@ function license_ctools_plugin_api($owner, $api) {
 }
 
 /**
- * Implementation of hook_default_licenses().
+ * Implements hook_default_licenses().
  *
  * Provide a couple of default presets.
  */
 function license_default_licenses() {
-  $export = array('' => (object)array(
+  $export = array('' => (object) array(
     'api_version' => 1,
     'name' => '',
     'version' => NULL,
@@ -67,7 +72,7 @@ function license_default_licenses() {
     'title' => t('No specified license'),
     'explanation' => t('There is no information about the license.'),
   ));
-  
+
   $sil = new stdClass();
   $sil->api_version = 1;
   $sil->logo = '';
@@ -79,7 +84,7 @@ function license_default_licenses() {
   $sil->url = 'http://scripts.sil.org/cms/scripts/page.php?item_id=OFL_web';
   $sil->explanation = '';
   $export[$sil->name] = $sil;
-  
+
   $wtfpl = new stdClass();
   $wtfpl->api_version = 1;
   $wtfpl->logo = '';
@@ -91,7 +96,7 @@ function license_default_licenses() {
   $wtfpl->url = 'http://sam.zoy.org/wtfpl/COPYING';
   $wtfpl->explanation = t('Not clear enough?');
   $export[$wtfpl->name] = $wtfpl;
-  
+
   $cc_codes = array(
     'by' => t('Creative Commons - Attribution'),
     'by-sa' => t('Creative Commons - Attribution Share Alike'),
@@ -106,12 +111,12 @@ function license_default_licenses() {
     '2.2',
     '3.0',
   );
-  
+
   $cc_languages = array('en', 'de', 'fr', 'in', 'es', 'it', 'ja');
   $site_languages = array_keys(language_list());
-  
+
   $cc_languages = array_intersect($cc_languages, $site_languages);
-  
+
   foreach ($cc_codes as $code => $title) {
     foreach ($cc_versions as $version) {
       foreach ($cc_languages as $langcode) {
@@ -123,42 +128,50 @@ function license_default_licenses() {
         $license->title = $title;
         $license->version = $version;
         $license->language = $langcode;
-        $license->url = check_url('http://creativecommons.org/licenses/'. $code .'/'. $version .'/deed.'. $langcode);
+        $license->url = check_url('http://creativecommons.org/licenses/' . $code . '/' . $version . '/deed.' . $langcode);
         $license->additional_fields = serialize(array(
           'author_name' => array(
-            '#title' => t('Author', array(), $langcode),
+            '#title' => t('Author', array(), array('langcode' => $langcode)),
             '#type' => 'textfield',
 //            '#required' => TRUE,
           ),
           'author_url' => array(
-            '#title' => t('Author URL', array(), $langcode),
+            '#title' => t('Author URL', array(), array('langcode' => $langcode)),
             '#type' => 'textfield',
 //            '#required' => TRUE,
           ),
         ));
-        
+
         $export[$license->name] = $license;
       }
     }
   }
-  
+
   return $export;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function license_get_name($code, $version = NULL, $langcode = NULL) {
-  
+
   if (empty($version)) {
     $version = '1.0';
   }
-  
+
   if (empty($langcode)) {
     global $language;
     $langcode = $language->language;
   }
-  
-  return preg_replace('/[^a-zA-Z0-9-]+/', '-', $code .'-'. $version .'-'. $langcode);
+
+  return preg_replace('/[^a-zA-Z0-9-]+/', '-', $code . '-' . $version . '-' . $langcode);
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function license_detailed_title($license) {
   return t('@license @version @language', array(
     '@license' => $license->title,
@@ -168,7 +181,7 @@ function license_detailed_title($license) {
 }
 
 /**
- * Implementation of hook_menu().
+ * Implements hook_menu().
  */
 function license_menu() {
   $items = array();
@@ -176,49 +189,49 @@ function license_menu() {
     'file' => 'license.admin.inc',
     'access arguments' => array('administer licenses'),
   );
-  $settings_base_path = 'admin/settings/license';
-  
+  $settings_base_path = 'admin/config/license';
+
   $items[$settings_base_path] = array(
     'title' => 'License',
     'description' => t('Manage the licenses.'),
     'page callback' => 'license_admin_descriptions',
   ) + $settings_base;
-  
-  $items[$settings_base_path .'/view'] = array(
+
+  $items[$settings_base_path . '/view'] = array(
     'title' => 'License descriptions',
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -10,
   );
-  
-  $items[$settings_base_path .'/add'] = array(
+
+  $items[$settings_base_path . '/add'] = array(
     'title' => 'Create new license description',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('license_admin_description'),
     'type' => MENU_CALLBACK,
   ) + $settings_base;
-  
-  $items[$settings_base_path .'/edit/%license'] = array(
+
+  $items[$settings_base_path . '/edit/%license'] = array(
     'title' => 'License description settings',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('license_admin_description', 4),
     'type' => MENU_CALLBACK,
   ) + $settings_base;
-  
-  $items[$settings_base_path .'/delete/%license'] = array(
+
+  $items[$settings_base_path . '/delete/%license'] = array(
     'title' => 'Delete license description',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('license_admin_description_delete', 4),
     'type' => MENU_CALLBACK,
   ) + $settings_base;
-  
-  $items[$settings_base_path .'/export/%license'] = array(
+
+  $items[$settings_base_path . '/export/%license'] = array(
     'title' => 'Export license description',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('license_admin_description_export', 4),
     'type' => MENU_CALLBACK,
   ) + $settings_base;
-  
-  $items[$settings_base_path .'/import'] = array(
+
+  $items[$settings_base_path . '/import'] = array(
     'title' => 'Import license description',
     'page callback' => 'drupal_get_form',
     'page arguments' => array('license_admin_description_import'),
@@ -231,10 +244,14 @@ function license_menu() {
     'page callback' => 'license_information_page',
     'access arguments' => array('access content'),
   );
-  
+
   return $items;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function license_icons_path() {
   $path = variable_get('license_icons_path', '');
   if (empty($path)) {
@@ -251,7 +268,7 @@ function license_icons_path() {
 function license_theme() {
   return array(
     'license_button_by_code' => array(
-      'arguments' => array(
+      'variables' => array(
         'code'      => NULL,
         'langcode'  => NULL,
         'version'   => NULL,
@@ -260,14 +277,14 @@ function license_theme() {
       ),
     ),
     'license_button_by_name' => array(
-      'arguments' => array(
+      'variables' => array(
         'name'      => NULL,
         'additions' => NULL,
         'size'      => '80x15',
       ),
     ),
     'license_button' => array(
-      'arguments' => array(
+      'variables' => array(
         'license'   => NULL,
         'additions' => NULL,
         'size'      => '80x15',
@@ -276,26 +293,49 @@ function license_theme() {
   );
 }
 
-function theme_license_button_by_name($name, $additions = array(), $size = '80x15') {
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
+function theme_license_button_by_name($variables) {
+  $name = $variables['name'];
+  $additions = $variables['additions'];
+  $size = $variables['size'];
   $license = license_load($name);
-  return theme('license_button', $license, $size);
+  return theme('license_button', array('license' => $license, 'additions' => $size));
 }
 
-function theme_license_button_by_code($code, $version = NULL, $langcode = NULL, $additions = array(), $size = '80x15') {
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
+function theme_license_button_by_code($variables) {
+  $code = $variables['code'];
+  $version = $variables['langcode'];
+  $langcode = $variables['version'];
+  $additions = $variables['additions'];
+  $size = $variables['size'];
   $license = license_load(license_get_name($code, $version, $langcode));
-  return theme('license_button', $license, $size);
+  return theme('license_button', array('license' => $license, 'additions' => $size));
 }
 
-function theme_license_button($license, $additions = array(), $size = '80x15') {
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
+function theme_license_button($variables) {
+  $license = $variables['license'];
+  $additions = $variables['additions'];
+  $size = $variables['size'];
   // no license information
   if (is_array($license)) {
     return '';
   }
-  
+
   $author = '';
   if ($additions['author_name']) {
     if (check_url($additions['author_url'])) {
-      $author = ' '. l($additions['author_name'], $additions['author_url'], array(
+      $author = ' ' . l($additions['author_name'], $additions['author_url'], array(
         'attributes' => array(
           'class' => 'license-author',
           'title' => check_url($additions['author_url']),
@@ -303,43 +343,51 @@ function theme_license_button($license, $additions = array(), $size = '80x15') {
       ));
     }
     else {
-      $author = ' <span class="license-author">'. check_plain($additions['author_name']) . '</span>';
+      $author = ' <span class="license-author">' . check_plain($additions['author_name']) . '</span>';
     }
   }
-  
+
   $alt = t('Licensed under: @license', array('@license' => $license->title));
-  $image_name = $license->code .'-'. $size .'.png';
-  $image = theme('image', license_icons_path() .'/'. $image_name, $alt, $alt);
+  $image_name = $license->code . '-' . $size . '.png';
+  $image = theme('image', array('path' => license_icons_path() . '/' . $image_name, 'width' => $alt, 'height' => $alt));
   $image = $image ? $image : $alt;
-  return '<span class="license-info">'. l($image, $license->url, array(
+  return '<span class="license-info">' . l($image, $license->url, array(
     'html' => TRUE,
     'attributes' => array(
       'class' => 'license-image',
     )
-  )) . $author .'</span>';
+  )) . $author . '</span>';
 }
 
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function license_default_options() {
   $options = array();
   return $options;
 }
 
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function license_information_page() {
   $output = '';
-  
+
   // Load license descriptions and present them in table form.
   $licenses = license_load();
   $header = array();
   $rows = array();
-  
+
   $languages = language_list('name');
-  
+
   foreach ($licenses as $key => $license) {
     if (_license_language_filter($langcode, $license)) {
       $row = array();
-      $row[] = theme('license_button_by_code', $license->code, $license->version, $license->language);
+      $row[] = theme('license_button_by_code', array('code' => $license->code, 'langcode' => $license->version, 'version' => $license->language));
       $row[] = check_plain($license->version);
       $row[] = l($license->title, $license->url);
       $row[] = check_plain($license->explanation);
@@ -347,18 +395,22 @@ function license_information_page() {
     }
   }
 
-  $output .= theme('table', $header, $rows);
+  $output .= theme('table', array('header' => $header, 'rows' => $rows));
 
-  
+
   return $output;
 }
 
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
 function license_form_options($version = NULL, $langcode = NULL, $groupby = NULL) {
   $options = array();
   foreach (license_load() as $name => $license) {
     $version_pass = (empty($version) || $version == $license->version);
     $language_pass = _license_language_filter($langcode, $license);
-    
+
     if ($version_pass && $language_pass) {
       $options[$license->name] = license_detailed_title($license);
     }
@@ -370,12 +422,16 @@ function license_form_options($version = NULL, $langcode = NULL, $groupby = NULL
   return $options;
 }
 
-function license_filter($version = NULL, $langcode = NULL) {
+/**
+ * @todo Please document this function.
+ * @see http://drupal.org/node/1354
+ */
+function license_filter_XXX($version = NULL, $langcode = NULL) {
   $licenses = array();
   foreach (license_load() as $name => $license) {
     $version_pass = (empty($version) || $version == $license->version);
     $language_pass = _license_language_filter($langcode, $license);
-    
+
     if ($version_pass && $language_pass) {
       $licenses[$name] = $license;
     }
@@ -384,7 +440,7 @@ function license_filter($version = NULL, $langcode = NULL) {
 }
 
 function _license_language_filter($langcode, $license) {
-  global $language;  
+  global $language;
   return (
     $langcode == 'all' ||
     empty($license->language) ||
